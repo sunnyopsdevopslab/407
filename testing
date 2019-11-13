@@ -1,0 +1,26 @@
+---
+- name: create users
+- hosts: all
+  become: true
+  vars_files:
+    - users_list.yml
+	- secret.yml
+  tasks:
+    - name: check if wheel exist
+	  group:
+	    name: wheel
+		status: present
+		
+    - name: create user from inventory
+	  user:
+	    name: "{{item.username}}"
+		group: wheel
+		password: "{{ user_password | password_hash('sha512') }}"
+		update_passwored: on_create 
+		shell: /bin/bash
+		uid: "{{item.uid}}"
+		ssh_key_file: /home/sunny/.ssh/id_rsa
+      loop: "{{ users }}"
+	  when:
+	    - ansible_nodename in group ['webserver']
+		- "item.uid|string|first == '1'"
